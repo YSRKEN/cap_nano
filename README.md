@@ -66,6 +66,11 @@
 |23 24|29 30|35 36|
 |:---:|:---:|:---:|
 
+|header1|header2|header3|
+|:--|--:|:--:|
+|align left|align right|align center|
+|a|b|c|
+
 ## 謝辞
 　Javaの開発に携わったオラクル(サン・マイクロシステムズ)に感謝。
 
