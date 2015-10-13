@@ -126,9 +126,23 @@ public class unit_window extends join_window{
 			int px = p % blocks_x, py = p / blocks_x;
 			graphics2d.drawString("" + (i / blocks_x + 1) + "-" + ((i % blocks_x) + 1), get_sx(px + 1) - 72, get_sy(py) + 38);
 		}
+		graphics2d.dispose();
 	}
 	/* ‰æ‘œ”»’è */
 	boolean checkImage(BufferedImage image){
 		return checkColor(image, 300, 172, 241, 191, 119);
+	}
+	int checkImageX(BufferedImage image){
+		if(!checkColor(image, 300, 172, 241, 191, 119)) return -1;
+		for(int i = 0; i < 4; i++){
+			if(checkColor(image, 136 + 30 * i, 122, 33, 150, 151)){
+				for(int j = 0; j < 6; j++){
+					if(checkColor(image, 294, 145 + 54 * j, 255, 102, 29)){
+						return i * 6 + j;
+					}
+				}
+			}
+		}
+		return -1;
 	}
 }

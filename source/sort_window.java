@@ -78,11 +78,23 @@ public class sort_window extends join_window{
 				}
 				break;
 		}
+		graphics2d.dispose();
 	}
 	/* ‰æ‘œ”»’è */
 	boolean checkImage(BufferedImage image){
 		if(checkColor(image, 420, 118, 66,  60,  59) == false) return false;
 		if(checkColor(image, 374,  80, 30, 157, 160) == false) return false;
 		return true;
+	}
+	int checkImageX(BufferedImage image){
+		if(checkColor(image, 420, 118, 66,  60,  59) == false) return -1;
+		if(checkColor(image, 374,  80, 30, 157, 160) == false) return -1;
+		for(int i = 0; i < blocks_size; i++){
+			int p = getIndex(i);
+			if(ss_buffer_flg.get(p) == false){
+				return p;
+			}
+		}
+		return -1;
 	}
 }

@@ -35,6 +35,7 @@ import java.util.Calendar;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.TransferHandler;
 
@@ -79,6 +80,7 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 		graphics = show_image.getGraphics();
 		graphics.setColor(Color.white);
 		graphics.fillRect(0, 0, window_x, window_y);
+		graphics.dispose();
 	}
 	/* アクセッサ */
 	abstract int get_position_x();
@@ -109,6 +111,7 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 			Graphics graphics = show_image.getGraphics();
 			graphics.setColor(Color.white);
 			graphics.fillRect(get_sx_(x), get_sy_(y), get_block_size_x_(), get_block_size_y_());
+			graphics.dispose();
 			// バッファの削除
 			ss_buffer.set(delete_position, clone(blank_image));
 			// フラグの削除
@@ -142,6 +145,7 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 				Graphics graphics = show_image.getGraphics();
 				graphics.drawImage(temp_1, get_sx_(x2), get_sy_(y2), this);
 				graphics.drawImage(temp_2, get_sx_(x1), get_sy_(y1), this);
+				graphics.dispose();
 				// バッファの交換
 				BufferedImage buffer2 = clone(ss_buffer.get(press_position));
 				ss_buffer.set(press_position, clone(ss_buffer.get(release_position)));
@@ -179,6 +183,7 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 		// ウィンドウにおける設定
 		setTitle(getWindowTitle());
 		getContentPane().setPreferredSize(new Dimension(window_x, window_y));
+		setLocationRelativeTo(null);
 		// オブジェクトにおける設定
 		panel = new join_panel();
 		getContentPane().add(panel, BorderLayout.CENTER);
@@ -200,10 +205,10 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 					graphics.drawImage(temp.getScaledInstance(get_block_size_x_(), get_block_size_y_(), Image.SCALE_AREA_AVERAGING), get_sx_(x), get_sy_(y), this);
 				}
 			}
+			graphics.dispose();
 			type_ = type;
 		}
 		redraw();
-//		System.out.println("" + dir + " " + type + " " + window_x + " " + window_y);
 	}
 	/* 画像を追加する */
 	public void addImage(BufferedImage image){
@@ -219,11 +224,29 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 					BufferedImage temp = image.getSubimage(get_position_x(), get_position_y(), get_block_size_x(), get_block_size_y());
 					Graphics graphics = show_image.getGraphics();
 					graphics.drawImage(temp.getScaledInstance(get_block_size_x_(), get_block_size_y_(), Image.SCALE_AREA_AVERAGING), get_sx_(px), get_sy_(py), this);
+					graphics.dispose();
 					panel.repaint();
 				main_window.putLog("位置：(" + px + "," + py + ")");
 				return;
 			}
 		}
+	}
+	/* 画像を追加する(位置認識Ver) */
+	public void addImageX(BufferedImage image){
+		if(image == null) return;
+		int position = checkImageX(image);
+		if(position < 0) return;
+		position = getIndex(position);
+		main_window.putLog("【自動取得】");
+			ss_buffer.set(position, image);
+			ss_buffer_flg.set(position, true);
+			int px = position % get_blocks_x(), py = position / get_blocks_x();
+			BufferedImage temp = image.getSubimage(get_position_x(), get_position_y(), get_block_size_x(), get_block_size_y());
+			Graphics graphics = show_image.getGraphics();
+			graphics.drawImage(temp.getScaledInstance(get_block_size_x_(), get_block_size_y_(), Image.SCALE_AREA_AVERAGING), get_sx_(px), get_sy_(py), this);
+			graphics.dispose();
+			panel.repaint();
+		main_window.putLog("位置：(" + px + "," + py + ")");
 	}
 	/* 画像を保存する */
 	abstract void addSpecialFrame(BufferedImage image, int px1, int py1, int px2, int py2);
@@ -251,6 +274,7 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 				graphics.drawImage(temp, get_sx(x), get_sy(y), this);
 			}
 		}
+		graphics.dispose();
 		// 特殊な枠線を追加する
 		if(option_window.checkbox1.isSelected()){
 			addSpecialFrame(save_buffer, px1, py1, px2, py2);
@@ -259,8 +283,21 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 		String save_name = sdf.format(Calendar.getInstance().getTime()) + ".png";
 		try{
 			ImageIO.write(save_buffer.getSubimage(px1 * get_block_size_x(), py1 * get_block_size_y(), (px2 - px1 + 1) * get_block_size_x(), (py2 - py1 + 1) * get_block_size_y()), "png", new File(save_name));
-//			ImageIO.write(save_buffer, "png", new File(save_name));
 			main_window.putLog(save_name);
+			int option = JOptionPane.showConfirmDialog(this, "画像をクリアしますか？", "記録は大切なの", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+			if(option == JOptionPane.YES_OPTION){
+				// show_imageの削除
+				graphics = show_image.getGraphics();
+				graphics.setColor(Color.white);
+				graphics.fillRect(0, 0, window_x, window_y);
+				graphics.dispose();
+				// バッファ・フラグの削除
+				for(int i = 0; i < blocks_size; i++){
+					ss_buffer.set(i, clone(blank_image));
+					ss_buffer_flg.set(i, false);
+				}
+				panel.repaint();
+			}
 		}
 		catch(Exception error){
 			error.printStackTrace();
@@ -268,7 +305,8 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 	}
 	/* 画像判定 */
 	abstract boolean checkImage(BufferedImage image);
-	boolean checkColor(BufferedImage image, int x, int y, int r, int g, int b){
+	abstract int checkImageX(BufferedImage image);
+	public static boolean checkColor(BufferedImage image, int x, int y, int r, int g, int b){
 		Color color = new Color(image.getRGB(x, y));
 		int diff_r = color.getRed() - r, diff_g = color.getGreen() - g, diff_b = color.getBlue() - b;
 		int diff = diff_r * diff_r + diff_g * diff_g + diff_b * diff_b;
@@ -321,6 +359,8 @@ abstract class join_window extends JFrame implements MouseListener, KeyListener,
 			for(int y = 1; y <= get_blocks_y() - 1; y++){
 				graphics2d.draw(new Line2D.Double(0, get_sy_(y), window_x, get_sy_(y)));
 			}
+			graphics.dispose();
+			graphics2d.dispose();
 		}
 	}
 	class DropFileHandler extends TransferHandler{
